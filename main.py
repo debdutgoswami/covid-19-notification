@@ -25,25 +25,30 @@ def check(_json) -> str:
     Returns:
         str -- The message which is to be sent as email.
     """
+    change = False
     _update, _msg = dict(), ""
-
     req = requests.get(_url).content
     soup = BeautifulSoup(req, 'html.parser')
     rows = soup.find_all('tr')
-    for row in rows[1:len(rows)-2]:
+
+    for row in rows[1:len(rows)-1]:
         col = row.find_all('td')
-
+        if len(col)<6:
+            continue
         state = col[1].text
-
-        #  current data from the website
-        _update.update({
-            state: {
-                "In": col[2].text,
-                "Fr": col[3].text,
-                "Cur": col[4].text,
-                "Dth": col[5].text
-            }
-        })
+        try:
+            # current data from the website
+            _update.update({
+                state: {
+                    "In": col[2].text,
+                    "Fr": col[3].text,
+                    "Cur": col[4].text,
+                    "Dth": col[5].text
+                }
+            })
+        except IndexError:
+            change = True
+            break
 
         # looking for changes in data
         try:
@@ -64,16 +69,28 @@ def check(_json) -> str:
             #  for addition of new state
             _msg += f"\nNew state {state} have {_update[state]['In'].strip()} Indian case, {_update[state]['Fr'].strip()} Foreign case, {_update[state]['Cur']} cured and {_update[state]['Dth']} death.\n"
 
+    if change==False:
+        try:
+            # count of the total cases in India
+            _total = rows[len(rows)-1].find_all('td')
+            _totIN, _totFR = _total[1].text, _total[2].text
+            total_msg = f"\r\nThe total no. of cases in India are {int(_totIN.strip())+int(_totFR.strip())} (including Foreign Nationality) having {_total[3].text.strip()} cured and {_total[4].text.strip()} deaths."
+        except ValueError:
+            # count of the total cases in India
+            _total = rows[len(rows)-2].find_all('td')
+            _totIN, _totFR = _total[1].text, _total[2].text
+            total_msg = f"\r\nThe total no. of cases in India are {int(_totIN[:len(_totIN)-2].strip())+int(_totFR[:len(_totFR)-2].strip())} (including Foreign Nationality) having {_total[3].text.strip()} cured and {_total[4].text.strip()} deaths."
+    else:
+        # count of the total cases in India
+        _total = rows[len(rows)-2].find_all('td')
+        _totIN, _totFR = _total[1].text, _total[2].text
+        total_msg = f"\r\nThe total no. of cases in India are {int(_totIN[:len(_totIN)-2].strip())+int(_totFR[:len(_totFR)-2].strip())} (including Foreign Nationality) having {_total[3].text.strip()} cured and {_total[4].text.strip()} deaths."
+
     # if there is no change then there is no point in sending notification
     if len(_msg):
         with open('stats.json', 'w') as f:
             json.dump(_update, f)
 
-        # count of the total cases in India
-        _total = rows[len(rows)-2].find_all('td')
-        _totIN, _totFR = _total[1].text, _total[2].text
-        total_msg = f"\r\nThe total no. of cases in India are {int(_totIN[:len(_totIN)-2].strip())+int(_totFR[:len(_totFR)-2].strip())} (including Foreign Nationality) having {_total[3].text.strip()} cured and {_total[4].text.strip()} deaths."
-        print(total_msg)
         _msg += total_msg
         _msg = "Hi,\r\nThere has been an update in the number of cases reported for COVID-19.\r\n" + _msg
 
@@ -113,8 +130,7 @@ if __name__ == "__main__":
         with open('stats.json', 'r') as f:
             _json = json.load(f)
 
-
-        emails = list(db.reference(url='https://coronanotifier.firebaseio.com/').child('emails').get())
+        emails = list(db.reference(url=os.getenv('FIREBASE')).child('emails').get())
 
         EMAIL_BODY = check(_json)
 
