@@ -113,11 +113,12 @@ def send_notification(emails: list, EMAIL_BODY: str):
 
     msg = MIMEMultipart()
     msg['From'] = fromaddr
+    msg['To'] = fromaddr
     msg['Subject'] = "IMPORTANT: Updates on COVID-19 Cases in India"
     msg.attach(MIMEText(EMAIL_BODY))
 
+    # didn't add masg['To'] because anything we put in msg is visible to everyone so the everyones' email will be visible
     for toaddr in emails:
-        msg['To'] = toaddr
         text = msg.as_string()
         server.sendmail(fromaddr, toaddr, text)
 
