@@ -133,3 +133,6 @@ dmypy.json
 
 # firebase credentials
 private/
+
+# graphs
+*.png

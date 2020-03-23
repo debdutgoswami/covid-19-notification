@@ -1,12 +1,20 @@
-import requests, json, smtplib, os, time
+import requests, json, os, time
+# email
+import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+# beautifulsoup4
 from bs4 import BeautifulSoup
+# enviornment variable
 from dotenv import load_dotenv
 from pathlib import Path
 # firebase
 import firebase_admin
 from firebase_admin import db, credentials
+# matplotlib
+from matplotlib import pyplot as plt
+# numpy
+import numpy as np
 
 # firebase initialization
 cred = credentials.Certificate('private/coronanotifier-firebase-adminsdk.json')
@@ -25,17 +33,37 @@ def check(_json) -> str:
     Returns:
         str -- The message which is to be sent as email.
     """
+    global graph
+    # for graph
+    graph = {
+        'states': list(),
+        'total': list(),
+        'cured': list(),
+        'death': list()
+    }
+
     change = False
     _update, _msg = dict(), ""
+
+    # scraping
     req = requests.get(_url).content
     soup = BeautifulSoup(req, 'html.parser')
     rows = soup.find_all('tr')
 
     for row in rows[1:len(rows)-1]:
         col = row.find_all('td')
-        if len(col)<6:
+
+        if len(col)<6 or len(col)>6:
             continue
+
         state = col[1].text
+        # for graph
+        tot, cur, dth = int(col[2].text)+int(col[3].text), int(col[4].text), int(col[5].text)
+        graph['states'].append(state)
+        graph['total'].append(tot)
+        graph['cured'].append(cur)
+        graph['death'].append(dth)
+
         try:
             # current data from the website
             _update.update({
@@ -77,7 +105,7 @@ def check(_json) -> str:
             total_msg = f"\r\nThe total no. of cases in India are {int(_totIN.strip())+int(_totFR.strip())} (including Foreign Nationality) having {_total[3].text.strip()} cured and {_total[4].text.strip()} deaths."
         except ValueError:
             # count of the total cases in India
-            _total = rows[len(rows)-2].find_all('td')
+            _total = rows[len(rows)-1].find_all('td')
             _totIN, _totFR = _total[1].text, _total[2].text
             total_msg = f"\r\nThe total no. of cases in India are {int(_totIN[:len(_totIN)-2].strip())+int(_totFR[:len(_totFR)-2].strip())} (including Foreign Nationality) having {_total[3].text.strip()} cured and {_total[4].text.strip()} deaths."
     else:
@@ -98,7 +126,21 @@ def check(_json) -> str:
 
     return None
 
-def send_notification(emails: list, EMAIL_BODY: str):
+def create_chart():
+    x=np.arange(len(graph['states']))
+    ax = plt.subplot(1,1,1)
+    w = 0.3
+    plt.xticks(x, graph['states'], rotation='vertical')
+    ax.bar(x-w, graph['total'], width=w, color='b', align='center')
+    ax.bar(x, graph['cured'], width=w, color='g', align='center')
+    ax.bar(x+w, graph['death'], width=w, color='r', align='center')
+    plt.xlabel('States')
+    plt.ylabel('Person')
+    plt.autoscale(enable=False)
+    plt.show()
+
+
+def send_notification(EMAIL_BODY: str):
     """Used to send  emails to the subscribers.
 
     Arguments:
@@ -131,11 +173,12 @@ if __name__ == "__main__":
         with open('stats.json', 'r') as f:
             _json = json.load(f)
 
-        emails = list(db.reference(url=os.getenv('FIREBASE')).child('emails').get())
+        #emails = list(db.reference(url=os.getenv('FIREBASE')).child('emails').get())
+        emails = ['debdutgoswami@gmail.com']
 
         EMAIL_BODY = check(_json)
-
-        if EMAIL_BODY:
-            send_notification(emails, EMAIL_BODY)
+        create_chart()
+        # if EMAIL_BODY:
+        #     send_notification(EMAIL_BODY)
 
         time.sleep(300)
