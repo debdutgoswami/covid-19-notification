@@ -169,15 +169,18 @@ def send_notification(EMAIL_BODY: str):
     msg['Subject'] = "IMPORTANT: Updates on COVID-19 Cases in India"
     with open('update.png', 'rb') as f:
         msgImage = MIMEImage(f.read())
-    msgImage.add_header('Content-ID', '<image1')
-    _html = '<p>'+EMAIL_BODY+'</p><br><img src="cid:image1">'
-    msg.attach(MIMEText(EMAIL_BODY, 'html'))
+    msgImage.add_header('Content-ID', '<covid-19-India>')
+    _html = '<p>'+EMAIL_BODY+'<br><br>You can find the graphical reprensentation of the outbreak below.<br></p><br><img src="cid:covid-19-India">'
+    msg.attach(MIMEText(_html, 'html'))
     msg.attach(msgImage)
 
     # didn't add masg['To'] because anything we put in msg is visible to everyone so the everyones' email will be visible
     for toaddr in emails:
         text = msg.as_string()
         server.sendmail(fromaddr, toaddr, text)
+
+    # delete the image
+    os.remove('update.png')
 
 
 if __name__ == "__main__":
@@ -188,8 +191,7 @@ if __name__ == "__main__":
         with open('stats.json', 'r') as f:
             _json = json.load(f)
 
-        #emails = list(db.reference(url=os.getenv('FIREBASE')).child('emails').get())
-        emails = ['debdutgoswami@gmail.com']
+        emails = list(db.reference(url=os.getenv('FIREBASE')).child('emails').get())
 
         EMAIL_BODY = check(_json)
 

@@ -136,3 +136,6 @@ private/
 
 # graphs
 *.png
+
+# virtual enviorm=nment
+covid-19/
