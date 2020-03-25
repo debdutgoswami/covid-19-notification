@@ -62,7 +62,7 @@ def check(_json) -> str:
 
         state = col[1].text
         # for graph
-        tot, cur, dth = int(col[2].text)+int(col[3].text), int(col[4].text), int(col[5].text)
+        tot, cur, dth = int(col[2].text.rstrip('# '))+int(col[3].text.rstrip('# ')), int(col[4].text.rstrip('# ')), int(col[5].text.rstrip('# '))
         graph['states'].append(state)
         graph['total'].append(tot)
         graph['cured'].append(cur)
@@ -102,21 +102,15 @@ def check(_json) -> str:
             _msg += f"<br>New state {state} have {_update[state]['In'].strip()} Indian case, {_update[state]['Fr'].strip()} Foreign case, {_update[state]['Cur']} cured and {_update[state]['Dth']} death.<br>"
 
     if change==False:
-        try:
-            # count of the total cases in India
-            _total = rows[len(rows)-1].find_all('td')
-            _totIN, _totFR = _total[1].text, _total[2].text
-            total_msg = f"<br><br>The total no. of cases in India are {int(_totIN.strip())+int(_totFR.strip())} (including Foreign Nationality) having {_total[3].text.strip()} cured and {_total[4].text.strip()} deaths."
-        except ValueError:
-            # count of the total cases in India
-            _total = rows[len(rows)-1].find_all('td')
-            _totIN, _totFR = _total[1].text, _total[2].text
-            total_msg = f"<br><br>The total no. of cases in India are {int(_totIN[:len(_totIN)-2].strip())+int(_totFR[:len(_totFR)-2].strip())} (including Foreign Nationality) having {_total[3].text.strip()} cured and {_total[4].text.strip()} deaths."
+        # count of the total cases in India
+        _total = rows[len(rows)-1].find_all('td')
+        _totIN, _totFR = _total[1].text, _total[2].text
+        total_msg = f"<br><br>The total no. of cases in India are {int(_totIN.rstrip('# '))+int(_totFR.rstrip('# '))} (including Foreign Nationality) having {_total[3].text.strip()} cured and {_total[4].text.strip()} deaths."
     else:
         # count of the total cases in India
         _total = rows[len(rows)-2].find_all('td')
         _totIN, _totFR = _total[1].text, _total[2].text
-        total_msg = f"<br><br>The total no. of cases in India are {int(_totIN[:len(_totIN)-2].strip())+int(_totFR[:len(_totFR)-2].strip())} (including Foreign Nationality) having {_total[3].text.strip()} cured and {_total[4].text.strip()} deaths."
+        total_msg = f"<br><br>The total no. of cases in India are {int(_totIN.rstrip('# '))+int(_totFR.rstrip('# '))} (including Foreign Nationality) having {_total[3].text.strip()} cured and {_total[4].text.strip()} deaths."
 
     # if there is no change then there is no point in sending notification
     if len(_msg):
@@ -144,7 +138,7 @@ def create_chart():
     ax.bar(x-w, graph['total'], width=w, color='#0000FF', align='center')
     ax.bar(x, graph['cured'], width=w, color='#00FF00', align='center')
     ax.bar(x+w, graph['death'], width=w, color='#FF0000', align='center')
-    ax.legend(custom_lines, ['Total (India + Foreign)', 'Cured', 'Death'])
+    ax.legend(custom_lines, ['Total (Indian + Foreign)', 'Cured', 'Death'])
     plt.title('COVID-19 INDIA OUTBREAK')
     fig.savefig('update')
     plt.close(fig=fig)
