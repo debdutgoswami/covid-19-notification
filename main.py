@@ -94,7 +94,7 @@ def check(_json) -> str:
             if _prev["Cur"] != _cur["Cur"]:
                 cur_msg += f"Cured case has changed from {_prev['Cur'].strip()} to {_cur['Cur'].strip()}\t"
             if _prev["Dth"] != _cur["Dth"]:
-                cur_msg += f"Death case has changed from {_prev['In'].strip()} to {_cur['In'].strip()}\t"
+                cur_msg += f"Death case has changed from {_prev['Dth'].strip()} to {_cur['Dth'].strip()}\t"
             if len(cur_msg):
                 _msg += f"<br>In {state},\nNo. of " + cur_msg
         except KeyError:
