@@ -57,7 +57,7 @@ def check(_json) -> str:
     for row in rows[1:len(rows)-1]:
         col = row.find_all('td')
 
-        if len(col)<6 or len(col)>6:
+        if len(col)!=6:
             continue
 
         state = col[1].text
@@ -68,19 +68,15 @@ def check(_json) -> str:
         graph['cured'].append(cur)
         graph['death'].append(dth)
 
-        try:
             # current data from the website
-            _update.update({
-                state: {
-                    "In": col[2].text,
-                    "Fr": col[3].text,
-                    "Cur": col[4].text,
-                    "Dth": col[5].text
-                }
-            })
-        except IndexError:
-            change = True
-            break
+        _update.update({
+            state: {
+                "In": col[2].text,
+                "Fr": col[3].text,
+                "Cur": col[4].text,
+                "Dth": col[5].text
+            }
+        })
 
         # looking for changes in data
         try:
@@ -101,12 +97,12 @@ def check(_json) -> str:
             #  for addition of new state
             _msg += f"<br>New state {state} have {_update[state]['In'].strip()} Indian case, {_update[state]['Fr'].strip()} Foreign case, {_update[state]['Cur']} cured and {_update[state]['Dth']} death.<br>"
 
-    if change==False:
+    try:
         # count of the total cases in India
         _total = rows[len(rows)-1].find_all('td')
         _totIN, _totFR = _total[1].text, _total[2].text
         total_msg = f"<br><br>The total no. of cases in India are {int(_totIN.rstrip('# '))+int(_totFR.rstrip('# '))} (including Foreign Nationality) having {_total[3].text.strip()} cured and {_total[4].text.strip()} deaths."
-    else:
+    except IndexError:
         # count of the total cases in India
         _total = rows[len(rows)-2].find_all('td')
         _totIN, _totFR = _total[1].text, _total[2].text
