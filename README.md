@@ -10,4 +10,8 @@ A python project which  will notify it's users whenever there is a update in num
 
 2. requests
 
+3. firebase-admin
+
+4. matplotlib
+
 ---
