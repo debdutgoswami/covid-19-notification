@@ -46,7 +46,6 @@ def check(_json) -> str:
         'death': list()
     }
 
-    change = False
     _update, _msg = dict(), ""
 
     # scraping
@@ -57,12 +56,15 @@ def check(_json) -> str:
     for row in rows[1:len(rows)-1]:
         col = row.find_all('td')
 
-        if len(col)!=6:
+        if len(col)!=5:
             continue
-
+        #print(row)
         state = col[1].text
         # for graph
-        tot, cur, dth = int(col[2].text.rstrip('# '))+int(col[3].text.rstrip('# ')), int(col[4].text.rstrip('# ')), int(col[5].text.rstrip('# '))
+        try:
+            tot, cur, dth = int(col[2].text.rstrip('# ')), int(col[3].text.rstrip('# ')), int(col[4].text.rstrip('# '))
+        except ValueError:
+            continue
         graph['states'].append(state)
         graph['total'].append(tot)
         graph['cured'].append(cur)
@@ -72,9 +74,8 @@ def check(_json) -> str:
         _update.update({
             state: {
                 "In": col[2].text,
-                "Fr": col[3].text,
-                "Cur": col[4].text,
-                "Dth": col[5].text
+                "Cur": col[3].text,
+                "Dth": col[4].text
             }
         })
 
@@ -85,8 +86,6 @@ def check(_json) -> str:
             cur_msg = ""
             if _prev["In"] != _cur["In"]:
                 cur_msg += f"Indian case has changed from {_prev['In'].strip()} to {_cur['In'].strip()}\t"
-            if _prev["Fr"] != _cur["Fr"]:
-                cur_msg += f"Foreign case has changed from {_prev['Fr'].strip()} to {_cur['Fr'].strip()}\t"
             if _prev["Cur"] != _cur["Cur"]:
                 cur_msg += f"Cured case has changed from {_prev['Cur'].strip()} to {_cur['Cur'].strip()}\t"
             if _prev["Dth"] != _cur["Dth"]:
@@ -95,18 +94,18 @@ def check(_json) -> str:
                 _msg += f"<br>In {state},\nNo. of " + cur_msg
         except KeyError:
             #  for addition of new state
-            _msg += f"<br>New state {state} have {_update[state]['In'].strip()} Indian case, {_update[state]['Fr'].strip()} Foreign case, {_update[state]['Cur']} cured and {_update[state]['Dth']} death.<br>"
+            _msg += f"<br>New state {state} have {_update[state]['In'].strip()} Total case, {_update[state]['Cur']} Cured and {_update[state]['Dth']} Death.<br>"
 
     try:
         # count of the total cases in India
         _total = rows[len(rows)-1].find_all('td')
-        _totIN, _totFR = _total[1].text, _total[2].text
-        total_msg = f"<br><br>The total no. of cases in India are {int(_totIN.rstrip('# '))+int(_totFR.rstrip('# '))} (including Foreign Nationality) having {_total[3].text.strip()} cured and {_total[4].text.strip()} deaths."
+        _totIN = _total[1].text
+        total_msg = f"<br><br>The total no. of cases in India are {int(_totIN.rstrip('# '))} having {_total[2].text.strip()} cured and {_total[3].text.strip()} deaths."
     except IndexError:
         # count of the total cases in India
         _total = rows[len(rows)-2].find_all('td')
-        _totIN, _totFR = _total[1].text, _total[2].text
-        total_msg = f"<br><br>The total no. of cases in India are {int(_totIN.rstrip('# '))+int(_totFR.rstrip('# '))} (including Foreign Nationality) having {_total[3].text.strip()} cured and {_total[4].text.strip()} deaths."
+        _totIN = _total[1].text
+        total_msg = f"<br><br>The total no. of cases in India are {int(_totIN.rstrip('# '))} having {_total[2].text.strip()} cured and {_total[3].text.strip()} deaths."
 
     # if there is no change then there is no point in sending notification
     if len(_msg):
