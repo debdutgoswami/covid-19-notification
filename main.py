@@ -108,9 +108,14 @@ def check(_json) -> str:
             _totIN = _total[1].text
             total_msg = f"<br><br>The total no. of cases in India are {int(_totIN.rstrip('#* '))} having {_total[2].text.strip()} cured and {_total[3].text.strip()} deaths."
         except IndexError:
-            _total = rows[len(rows)-3].find_all('td')
-            _totIN = _total[1].text
-            total_msg = f"<br><br>The total no. of cases in India are {int(_totIN.rstrip('#* '))} having {_total[2].text.strip()} cured and {_total[3].text.strip()} deaths."
+            try:
+                _total = rows[len(rows)-3].find_all('td')
+                _totIN = _total[1].text
+                total_msg = f"<br><br>The total no. of cases in India are {int(_totIN.rstrip('#* '))} having {_total[2].text.strip()} cured and {_total[3].text.strip()} deaths."
+            except IndexError:
+                _total = rows[len(rows)-4].find_all('td')
+                _totIN = _total[1].text
+                total_msg = f"<br><br>The total no. of cases in India are {int(_totIN.rstrip('#* '))} having {_total[2].text.strip()} cured and {_total[3].text.strip()} deaths."
 
     # if there is no change then there is no point in sending notification
     if len(_msg):
